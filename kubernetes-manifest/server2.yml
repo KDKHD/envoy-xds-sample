@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server2-envoy-sidecar-deployment
+  labels:
+    app: server2-envoy-sidecar
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: server2-envoy-sidecar
+  template:
+    metadata:
+      labels:
+        app: server2-envoy-sidecar
+    # The imp stuff
+    spec:
+      # Deployment has 2 containers!
+      containers:
+      - name: server2-envoy-sidecar
+        image: kennethkreindler/envoy:100423-14-35-45
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 5199
+          name: envoy-port
+      - name: server2
+        image: kennethkreindler/server2:100423-12-27-40
+        imagePullPolicy: Never
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: server2-envoy-sidecar-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: server2-envoy-sidecar
+  ports:
+  # Service only exposes the Envoy container
+  - name: server2-envoy-sidecar-svc-port
+    protocol: TCP
+    port: 5199
+    targetPort: envoy-port
